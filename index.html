@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Swagger Swift Client Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=1950&q=80');
+      background-size: cover;
+      background-position: center;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    #passwordOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      color: white;
+    }
+    #passwordOverlay h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #ffffff;
+    }
+    #passwordOverlay input[type="password"] {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 12px;
+      width: 240px;
+    }
+    #passwordOverlay button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #welcomeMessage {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #00ffcc;
+      text-align: center;
+    }
+    #loginSpinner {
+      margin-top: 15px;
+      display: none;
+    }
+    #loginSpinner div {
+      width: 30px;
+      height: 30px;
+      border: 4px solid #00ffcc;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px 40px 0;
+      font-weight: bold;
+    }
+    .date-time {
+      font-size: 28px;
+      line-height: 1.4;
+    }
+    .date-line {
+      font-size: 20px;
+    }
+    .internet-status {
+      font-size: 20px;
+      text-align: right;
+    }
+    .container {
+      background-color: rgba(255, 255, 255, 0.95);
+      width: 600px;
+      margin: 40px auto;
+      padding: 40px 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative;
+    }
+    h2 {
+      margin-bottom: 30px;
+      font-size: 24px;
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+      margin-top: 20px;
+      color: #444;
+      text-align: left;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    .fixed-size input[type="text"] {
+      width: 550px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-start;
+    }
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      min-width: 140px;
+    }
+    button:hover:not(:disabled) {
+      background-color: #218838;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      background-color: #999 !important;
+    }
+    #status {
+      margin-top: 25px;
+      font-weight: bold;
+      color: #444;
+    }
+    .spinner {
+      margin-top: 20px;
+      display: none;
+    }
+    .spinner div {
+      width: 20px;
+      height: 20px;
+      margin: auto;
+      border: 4px solid #28a745;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .footer {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 16px;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+    }
+    /* ViewApi button styles */
+    #viewApiBtn {
+      background-color: #007bff;
+    }
+    #viewApiBtn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <!-- Add JSZip library for proper ZIP file creation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body onload="initStatus()">
+
+  <!-- Password Overlay -->
+  <div id="passwordOverlay">
+    <h2>Please Enter Password</h2>
+    <input type="password" id="passwordInput" placeholder="Enter password" onkeydown="handleKey(event)" autofocus />
+    <button onclick="checkPassword()">Submit</button>
+    <div id="welcomeMessage"></div>
+    <div id="loginSpinner"><div></div></div>
+  </div>
+
+  <!-- Main App -->
+  <div class="header-info">
+    <div>
+      <div id="timeNow" class="date-time"></div>
+      <div id="dateNow" class="date-line"></div>
+    </div>
+    <div id="internetStatus" class="internet-status">Checking connection...</div>
+  </div>
+
+  <div class="container" id="formContainer" style="display:none;">
+    <h2>Swagger Swift Client Generator Swift5</h2>
+
+    <label for="specUrl">Swagger Spec URL:</label>
+    <input type="text" id="specUrl" placeholder="Enter Swagger spec URL here" />
+
+    <div class="checkbox-group">
+      <input type="checkbox" id="customNameToggle" onchange="toggleFilenameField()" />
+      <label for="customNameToggle">Need custom name for your folder?</label>
+    </div>
+
+    <div id="filenameContainer" style="display: none;">
+      <label for="filename">Filename (optional):</label>
+      <input type="text" id="filename" placeholder="generated-client.zip" />
+    </div>
+    
+
+    <div class="button-group">
+      <button onclick="clearInputs()">Clear</button>
+      <button onclick="generateClient()">Download</button>
+      <button id="viewApiBtn" onclick="handleViewApi()" style="display:none;">ViewApi</button>
+    </div>
+
+    <p id="status"></p>
+    <div class="spinner" id="loadingSpinner"><div></div></div>
+  </div>
+
+  <div class="footer">Developed by Dilshan Thalagahapitiya</div>
+
+  <script>
+    // User roles map with their session durations (in milliseconds)
+    const userRoles = {
+      "admin01230": { role: "admin", sessionDuration: 24 * 60 * 60 * 1000 }, // 1 day
+      "user123": { role: "user", sessionDuration: 1 * 60 * 1000 }           // 1 minute
+    };
+
+    let currentUserRole = null;
+    let sessionTimeout = null;
+
+    function handleKey(event) {
+      if (event.key === "Enter") {
+        checkPassword();
+      }
+    }
+
+    function checkPassword() {
+      const inputPassword = document.getElementById("passwordInput").value;
+      const userInfo = userRoles[inputPassword];
+
+      if (userInfo) {
+        currentUserRole = userInfo.role;
+        const sessionDuration = userInfo.sessionDuration;
+
+        const msg = document.getElementById("welcomeMessage");
+        msg.textContent = `Welcome, ${currentUserRole.toUpperCase()}!`;
+        document.getElementById("loginSpinner").style.display = "block";
+
+        setTimeout(() => {
+          document.getElementById("passwordOverlay").style.display = "none";
+          msg.textContent = "";
+          document.getElementById("loginSpinner").style.display = "none";
+          document.getElementById("passwordInput").value = "";
+
+          // Only set up session timer if we have a valid user
+          resetSessionTimer(sessionDuration);
+          setupUserActivityTracking(sessionDuration);
+
+          // Show main form
+          document.getElementById("formContainer").style.display = "block";
+
+          // Show ViewApi button only to admin
+          const viewApiBtn = document.getElementById("viewApiBtn");
+          if (currentUserRole === "admin") {
+            viewApiBtn.style.display = "inline-block";
+          } else {
+            viewApiBtn.style.display = "none";
+          }
+
+          document.getElementById("status").textContent = "";
+        }, 2000);
+      } else {
+        alert("Incorrect password.");
+      }
+    }
+
+    // Reset session timer to logout after sessionDuration ms
+    function resetSessionTimer(sessionDuration) {
+      // Clear any existing timeout
+      if (sessionTimeout) {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = null;
+      }
+      
+      // Only set new timeout if we have a valid session duration
+      if (sessionDuration && currentUserRole) {
+        sessionTimeout = setTimeout(() => {
+          alert("Session expired. Please login again.");
+          logout();
+        }, sessionDuration);
+      }
+    }
+
+    // Setup user activity listeners to reset timer on activity
+    function setupUserActivityTracking(sessionDuration) {
+      // Remove previous listeners to avoid duplicates
+      window.onmousemove = null;
+      window.onkeydown = null;
+      window.onclick = null;
+      window.onscroll = null;
+
+      // Only add listeners if we have a valid session duration and user is logged in
+      if (sessionDuration && currentUserRole) {
+        // Add listeners to reset timer
+        window.onmousemove = () => resetSessionTimer(sessionDuration);
+        window.onkeydown = () => resetSessionTimer(sessionDuration);
+        window.onclick = () => resetSessionTimer(sessionDuration);
+        window.onscroll = () => resetSessionTimer(sessionDuration);
+      }
+    }
+
+    function logout() {
+      if (currentUserRole) {
+        currentUserRole = null;
+        if (sessionTimeout) {
+          clearTimeout(sessionTimeout);
+          sessionTimeout = null;
+        }
+        document.getElementById("passwordOverlay").style.display = "flex";
+        document.getElementById("formContainer").style.display = "none";
+        document.getElementById("status").textContent = "";
+      }
+    }
+
+    function initStatus() {
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+      updateInternetStatus();
+      window.addEventListener('online', updateInternetStatus);
+      window.addEventListener('offline', updateInternetStatus);
+    }
+
+    function updateDateTime() {
+      const now = new Date();
+      const timeNow = document.getElementById("timeNow");
+      const dateNow = document.getElementById("dateNow");
+
+      // Format time as 12-hour with seconds
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      let seconds = now.getSeconds();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      timeNow.textContent = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)} ${ampm}`;
+
+      // Format date as "Thursday, 26 May 2025"
+      const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const dayName = dayNames[now.getDay()];
+      const monthName = monthNames[now.getMonth()];
+      const dateStr = `${dayName}, ${now.getDate()} ${monthName} ${now.getFullYear()}`;
+      dateNow.textContent = dateStr;
+    }
+
+    function padZero(n) {
+      return n < 10 ? '0' + n : n;
+    }
+
+    function updateInternetStatus() {
+      const status = navigator.onLine ? "Internet Connected" : "Internet Disconnected";
+      const color = navigator.onLine ? "#00cc00" : "#cc0000";
+      const elem = document.getElementById("internetStatus");
+      elem.textContent = status;
+      elem.style.color = color;
+    }
+
+    function toggleFilenameField() {
+      const checkbox = document.getElementById("customNameToggle");
+      const container = document.getElementById("filenameContainer");
+      container.style.display = checkbox.checked ? "block" : "none";
+    }
+
+    function clearInputs() {
+      document.getElementById("specUrl").value = "";
+      document.getElementById("filename").value = "";
+      document.getElementById("customNameToggle").checked = false;
+      toggleFilenameField();
+      document.getElementById("status").textContent = "";
+    }
+
+    function ensureZipExtension(filename) {
+      return filename.toLowerCase().endsWith('.zip') ? filename : `${filename}.zip`;
+    }
+
+    async function generateClient() {
+      const specUrl = document.getElementById("specUrl").value.trim();
+      let customFilename = document.getElementById("customNameToggle").checked
+        ? document.getElementById("filename").value.trim()
+        : "";
+      const statusEl = document.getElementById("status");
+      const spinner = document.getElementById("loadingSpinner");
+
+      if (!specUrl) {
+        alert("Please enter a Swagger spec URL.");
+        return;
+      }
+
+      // Set filename
+      if (customFilename) {
+        customFilename = ensureZipExtension(customFilename);
+      } else {
+        customFilename = "generated-client.zip";
+      }
+
+      statusEl.textContent = "Generating client, please wait...";
+      spinner.style.display = "block";
+
+      try {
+        const response = await fetch("https://generator3.swagger.io/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            specURL: specUrl,
+            lang: "swift5",
+            type: "CLIENT",
+            codegenVersion: "V2"
+          })
+        });
+
+        if (!response.ok) throw new Error("Failed to generate client.");
+
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = customFilename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+
+        statusEl.textContent = "Download started successfully.";
+      } catch (err) {
+        statusEl.textContent = "Error: " + err.message;
+      } finally {
+        spinner.style.display = "none";
+      }
+    }
+
+    function handleViewApi() {
+      if (currentUserRole === "admin") {
+        const specUrl = document.getElementById("specUrl").value.trim();
+
+        if (!specUrl) {
+          alert("Please enter a Swagger Spec URL before viewing the API.");
+          return;
+        }
+
+        // Open Swagger UI with the provided spec URL
+        const swaggerUiUrl = `https://petstore.swagger.io/?url=${encodeURIComponent(specUrl)}`;
+        window.open(swaggerUiUrl, "_blank");
+      } else {
+        alert("Access denied. ViewApi is only available to admins.");
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+
+{
+  "name": "SwaggerClientGen",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-packager . SwaggerClientGen --platform=darwin --arch=x64 --out=dist --overwrite",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-packager": "^17.1.0",
+    "electron-builder": "^24.11.0"
+  },
+  "build": {
+    "appId": "com.example.SwaggerClientGen",
+    "mac": {
+      "target": "dmg"
+    }
+  }
+}
